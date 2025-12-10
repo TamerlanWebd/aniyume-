@@ -22,15 +22,14 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await hashPassword(password);
-
     const user = await db.user.create({
       data: {
         email,
-        passwordHash: hashedPassword,
+        password: hashedPassword,
       },
     });
 
-    const { passwordHash: _, ...userWithoutPassword } = user;
+    const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json(userWithoutPassword, { status: 201 });
   } catch (error) {
