@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String
+  role         Role     @default(USER)
+  xp           Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  likes        Like[]
+  achievements Achievement[]
+}
+
+model Anime {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  year        Int
+  genres      String[]
+  coverImage  String
+  episodes    Episode[]
+  likes       Like[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Episode {
+  id        String   @id @default(uuid())
+  number    Int
+  title     String
+  videoUrl  String
+  animeId   String
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  animeId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anime     Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, animeId])
+}
+
+model Achievement {
+  id        String   @id @default(uuid())
+  title     String
+  icon      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
