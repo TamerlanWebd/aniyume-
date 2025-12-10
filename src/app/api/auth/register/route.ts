@@ -1,31 +1,39 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import db from "@/db";
+import { hashPassword } from "@/utils/hash";
 
-export async function POST(req: NextRequest) {
+const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const { email, password } = registerSchema.parse(body);
 
-    if (!email || !password) {
+    const existingUser = await db.user.findUnique({ where: { email } });
+    if (existingUser) {
       return NextResponse.json(
-        { error: "Email и пароль обязательны" },
-        { status: 400 }
+        { error: "User already exists" },
+        { status: 409 }
       );
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return NextResponse.json({ error: "Email уже занят" }, { status: 409 });
-    }
+    const hashedPassword = await hashPassword(password);
 
-    const passwordHash = await hashPassword(password);
-    const user = await prisma.user.create({
-      data: { email, passwordHash },
-      select: { id: true, email: true, role: true },
+    const user = await db.user.create({
+      data: {
+        email,
+        passwordHash: hashedPassword,
+      },
     });
 
-    return NextResponse.json({ user }, { status: 201 });
+    const { passwordHash: _, ...userWithoutPassword } = user;
+
+    return NextResponse.json(userWithoutPassword, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }
