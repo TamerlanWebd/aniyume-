@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyAccessToken } from "@/utils/jwt";
 
+type JwtPayload = {
+  userId: string;
+  role?: string;
+};
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("accessToken")?.value;
   const { pathname } = request.nextUrl;
@@ -11,7 +16,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
-    const payload = verifyAccessToken(token) as any;
+    const payload = verifyAccessToken(token) as JwtPayload | null;
 
     if (!payload) {
       return NextResponse.redirect(new URL("/", request.url));

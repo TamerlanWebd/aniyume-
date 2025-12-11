@@ -17,6 +17,23 @@ export default function WavePlayer({ src }: WavePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  const [heights, setHeights] = useState<number[]>(() =>
+    Array.from({ length: 20 }, () => 10)
+  );
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setHeights(Array.from({ length: 20 }, () => 10));
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setHeights(Array.from({ length: 20 }, () => 10 + Math.random() * 30));
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) videoRef.current.pause();
@@ -50,16 +67,14 @@ export default function WavePlayer({ src }: WavePlayerProps) {
         onClick={togglePlay}
       />
 
-      {/* Controls Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        {/* Wave Animation Simulation */}
         <div className="flex justify-center items-end h-8 gap-1 mb-4">
-          {[...Array(20)].map((_, i) => (
+          {heights.map((height, i) => (
             <motion.div
               key={i}
               className="w-1 bg-purple-500 rounded-t"
               animate={{
-                height: isPlaying ? [10, Math.random() * 30 + 5, 10] : 5,
+                height: isPlaying ? height : 5,
               }}
               transition={{
                 duration: 0.5,
