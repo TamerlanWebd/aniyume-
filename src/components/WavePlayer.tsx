@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   PlayIcon,
@@ -17,45 +17,36 @@ export default function WavePlayer({ src }: WavePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const [heights, setHeights] = useState<number[]>(() =>
-    Array.from({ length: 20 }, () => 10)
-  );
-
-  useEffect(() => {
-    if (!isPlaying) {
-      setHeights(Array.from({ length: 20 }, () => 10));
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setHeights(Array.from({ length: 20 }, () => 10 + Math.random() * 30));
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [isPlaying]);
-
   const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) videoRef.current.pause();
-      else videoRef.current.play();
-      setIsPlaying(!isPlaying);
+    if (!videoRef.current) return;
+
+    if (isPlaying) {
+      videoRef.current.pause();
+    } else {
+      videoRef.current.play();
     }
+    setIsPlaying(!isPlaying);
   };
 
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const percent =
-        (videoRef.current.currentTime / videoRef.current.duration) * 100;
-      setProgress(percent);
-    }
+    if (!videoRef.current || !videoRef.current.duration) return;
+
+    const percent =
+      (videoRef.current.currentTime / videoRef.current.duration) * 100;
+    setProgress(percent);
   };
 
   const toggleFullscreen = () => {
-    if (videoRef.current) {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else videoRef.current.requestFullscreen();
+    if (!videoRef.current) return;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      videoRef.current.requestFullscreen();
     }
   };
+
+  const bars = Array.from({ length: 20 }, (_, i) => i);
 
   return (
     <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden group">
@@ -69,16 +60,16 @@ export default function WavePlayer({ src }: WavePlayerProps) {
 
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="flex justify-center items-end h-8 gap-1 mb-4">
-          {heights.map((height, i) => (
+          {bars.map((i) => (
             <motion.div
               key={i}
               className="w-1 bg-purple-500 rounded-t"
               animate={{
-                height: isPlaying ? height : 5,
+                height: isPlaying ? [5, 20, 10] : 5,
               }}
               transition={{
                 duration: 0.5,
-                repeat: Infinity,
+                repeat: isPlaying ? Infinity : 0,
                 repeatType: "reverse",
                 delay: i * 0.05,
               }}
