@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import db from "@/db";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { animeId, episodeNumber, videoUrl } = body;
 
-    console.log("Creating episode:", { animeId, episodeNumber, videoUrl });
+    const animeIdStr = String(animeId);
+    const episodeNumberInt = Number(episodeNumber);
 
-    // Проверка на дубликат
-    const existing = await prisma.episode.findUnique({
+    const existing = await db.episode.findFirst({
       where: {
-        animeId_episodeNumber: {
-          animeId: parseInt(animeId),
-          episodeNumber: parseInt(episodeNumber),
-        },
+        animeId: animeIdStr,
+        number: episodeNumberInt,
       },
     });
 
@@ -25,11 +23,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const episode = await prisma.episode.create({
+    const episode = await db.episode.create({
       data: {
-        animeId: parseInt(animeId),
-        episodeNumber: parseInt(episodeNumber),
+        animeId: animeIdStr,
+        number: episodeNumberInt,
         videoUrl,
+        title: `Серия ${episodeNumberInt}`,
       },
     });
 

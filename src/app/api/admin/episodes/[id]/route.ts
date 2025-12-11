@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import db from "@/db";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = await request.json();
-    const { title, description, year, genres, posterUrl } = body;
+    const { title, description, year, genres } = body;
 
-    const updated = await prisma.anime.update({
-      where: { id: Number(id) },
+    const updated = await db.anime.update({
+      where: { id },
       data: {
         title,
         description,
         year: Number(year),
         genres,
-        posterUrl: posterUrl || null,
       },
     });
 
